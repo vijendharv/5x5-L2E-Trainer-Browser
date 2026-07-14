@@ -4,6 +4,12 @@ A local browser version of the 5x5 L2E trainer. It includes all 12 cases from
 the supplied algorithm sheet, randomized state-preserving setup moves, a timer,
 manual time entry, filters, and per-case statistics.
 
+## Run online
+
+Open the hosted trainer at:
+
+<https://vijendharv.github.io/5x5-L2E-Trainer-Browser/>
+
 Solve history and the selected filter are stored only in this browser using
 `localStorage`. No server or account is required.
 
