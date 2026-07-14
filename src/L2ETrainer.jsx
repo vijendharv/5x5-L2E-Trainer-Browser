@@ -179,6 +179,7 @@ export default function L2ETrainer() {
 
   const startRef = useRef(0);
   const rafRef = useRef(null);
+  const spaceHeldRef = useRef(false);
 
   // load persisted state
   useEffect(() => {
@@ -225,19 +226,60 @@ export default function L2ETrainer() {
     rafRef.current = requestAnimationFrame(tick);
   }, []);
 
-  const startTimer = () => {
+  const startTimer = useCallback(() => {
     setShowAlg(false);
     startRef.current = Date.now();
     setElapsed(0);
     setPhase("running");
     rafRef.current = requestAnimationFrame(tick);
-  };
+  }, [tick]);
 
-  const stopTimer = () => {
+  const stopTimer = useCallback(() => {
     cancelAnimationFrame(rafRef.current);
     setElapsed(Date.now() - startRef.current);
     setPhase("stopped");
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!isDesktop) {
+      spaceHeldRef.current = false;
+      return undefined;
+    }
+
+    const isInteractiveTarget = (target) =>
+      target instanceof Element &&
+      Boolean(target.closest("input, textarea, select, button, [contenteditable='true']"));
+
+    const handleKeyDown = (event) => {
+      if (event.code !== "Space" || event.repeat || isInteractiveTarget(event.target)) return;
+      event.preventDefault();
+      spaceHeldRef.current = true;
+    };
+
+    const handleKeyUp = (event) => {
+      if (event.code !== "Space" || !spaceHeldRef.current) return;
+      spaceHeldRef.current = false;
+      if (isInteractiveTarget(event.target)) return;
+      event.preventDefault();
+
+      if (phase === "idle") startTimer();
+      else if (phase === "running") stopTimer();
+    };
+
+    const clearHeldSpace = () => {
+      spaceHeldRef.current = false;
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    window.addEventListener("blur", clearHeldSpace);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+      window.removeEventListener("blur", clearHeldSpace);
+      spaceHeldRef.current = false;
+    };
+  }, [isDesktop, phase, startTimer, stopTimer]);
 
   useEffect(() => () => cancelAnimationFrame(rafRef.current), []);
 
